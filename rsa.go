@@ -1,17 +1,14 @@
-// A concurrent prime sieve
+package rsa
 
-package main
+import "math/big"
 
-import (
-	"fmt"
-	"math/big"
-)
-
-type key struct {
-	exp int64
-	mod int64
+//Represent a RSA key
+type Key struct {
+	Exp int64
+	Mod int64
 }
 
+//Return maw value between 2 int
 func max(a, b int64) int64 {
 	if a > b {
 		return a
@@ -19,6 +16,7 @@ func max(a, b int64) int64 {
 	return b
 }
 
+//Return gcd between 2 int
 func gcd(a, b int64) int64 {
 	for b != 0 {
 		a, b = b, a%b
@@ -26,6 +24,7 @@ func gcd(a, b int64) int64 {
 	return a
 }
 
+//Split a message in bytes array of equal sizes
 func splitMessage(bytes []byte, size int) (chunks [][]byte) {
 	for len(bytes) > size {
 		chunks = append(chunks, bytes[:size])
@@ -37,33 +36,38 @@ func splitMessage(bytes []byte, size int) (chunks [][]byte) {
 	return chunks
 }
 
-func calculateKeys(p, q int64) (publicKey key, privateKey key) {
+//Return a public and a private key calculated from 2 random primes
+func CalculateKeys(size int) (publicKey Key, privateKey Key) {
+	p := CalculatePrime(size)
+	q := CalculatePrime(size)
 	n := p * q
 	m := (p - 1) * (q - 1)
-	publicKey.mod = n
-	privateKey.mod = n
+	publicKey.Mod = n
+	privateKey.Mod = n
 
 	for i := max(p, q) + 2; i < m; i += 2 {
 		if gcd(i, m) == 1 {
-			publicKey.exp = i
+			publicKey.Exp = i
 			break
 		}
 	}
 
 	for i := max(p, q) + 2; i < n; i++ {
-		if publicKey.exp*i%m == 1 {
-			privateKey.exp = i
+		if publicKey.Exp*i%m == 1 {
+			privateKey.Exp = i
 			break
 		}
 	}
 	return
 }
 
-func encrypt(msg []byte, publicKey key) (out []byte) {
-	e := big.NewInt(publicKey.exp)
-	n := big.NewInt(publicKey.mod)
-	size := 5
+//encrypt the giver message with the given key
+func Encrypt(msg []byte, publicKey Key) (out []byte) {
+	e := big.NewInt(publicKey.Exp)
+	n := big.NewInt(publicKey.Mod)
+	size := (n.BitLen() + 7) / 8
 
+	//3 is arbitrary
 	splitedMsg := splitMessage(msg, 3)
 
 	for i := 0; i < len(splitedMsg); i++ {
@@ -84,14 +88,14 @@ func encrypt(msg []byte, publicKey key) (out []byte) {
 		out = append(out, t...)
 
 	}
-	fmt.Println(out)
 	return
 }
 
-func decrypt(msg []byte, privateKey key) (out []byte) {
-	d := big.NewInt(privateKey.exp)
-	n := big.NewInt(privateKey.mod)
-	size := 5
+//decrypt the giver message with the given key
+func Decrypt(msg []byte, privateKey Key) (out []byte) {
+	d := big.NewInt(privateKey.Exp)
+	n := big.NewInt(privateKey.Mod)
+	size := (n.BitLen() + 7) / 8
 
 	splitedMsg := splitMessage(msg, size)
 
@@ -105,17 +109,4 @@ func decrypt(msg []byte, privateKey key) (out []byte) {
 	}
 	return out
 
-}
-
-// The prime sieve: Daisy-chain Filter processes.
-func main() {
-
-	p := calculatePrime(4)
-	q := calculatePrime(4)
-
-	publicKey, privateKey := calculateKeys(p, q)
-	fmt.Println(publicKey, privateKey)
-	code := encrypt([]byte("Emilie"), publicKey)
-	decode := decrypt(code, privateKey)
-	fmt.Println(string(decode))
 }

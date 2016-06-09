@@ -1,4 +1,4 @@
-package main
+package rsa
 
 import (
 	"math/rand"
@@ -29,7 +29,7 @@ func randInRange(min, max int) int {
 }
 
 //Return a random prime number of size n
-func calculatePrime(n int) int64 {
+func CalculatePrime(n int) int64 {
 
 	tab := []int{0, 3, 24, 167, 1228, 9591}
 	rand.Seed(time.Now().UTC().UnixNano())
